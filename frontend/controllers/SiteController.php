@@ -12,7 +12,10 @@ use frontend\models\PasswordResetRequestForm;
 use frontend\models\ResetPasswordForm;
 use frontend\models\SignupForm;
 use frontend\models\ContactForm;
-use app\models\EntryForm;
+use app\models\RecetteManager;
+use yii\web\UploadedFile;
+#use yii\web\Request;
+
 
 /**
  * Site controller
@@ -22,6 +25,27 @@ class SiteController extends Controller
     /**
      * @inheritdoc
      */
+    public $current_page = [
+        'acceuil' => '#section',
+        'recettes' => '#section',
+        'a_propos' => '#section',
+        'contacter_nous' => '#section',
+        'connection' => '#section',
+        'inscription' => '#section',
+        'add_recepie' => '#section',
+    ];
+
+    public $recipe_tags = [
+        'Fruits' => 'Fruits',
+        'Meat' => 'Meat',
+        'Wheat' => 'Wheat',
+        'Vegetables' => 'Vegetables',
+        'Breakfast' => 'Breakfast',
+        'Meal' => 'Meal',
+        'Desert' => 'Desert',
+        'Pastry' => 'Pastry',
+    ];
+
     public function behaviors()
     {
         return [
@@ -54,7 +78,7 @@ class SiteController extends Controller
      * @inheritdoc
      */
     public function actions()
-    {
+    {   
         return [
             'error' => [
                 'class' => 'yii\web\ErrorAction',
@@ -65,6 +89,11 @@ class SiteController extends Controller
             ],
         ];
     }
+    
+    public function actionSearch()
+    {
+        return $this->actionRecettes(true);
+    }
 
     /**
      * Displays homepage.
@@ -73,7 +102,55 @@ class SiteController extends Controller
      */
     public function actionIndex()
     {
+        $this->current_page['acceuil'] = '#header';
         return $this->render('index');
+    }
+
+
+    public function actionRecettes($search = false)
+    {
+        $this->current_page['recettes'] = '#header';
+        $model = new RecetteManager();
+
+        $request = Yii::$app->request;
+        $titreRecette = $request->get('recette');
+
+        #Si on veut voir seulement une recette
+        if(!empty($titreRecette)){
+
+            $recette = $model->getRecepie($titreRecette);
+
+            if(!empty($recette)){
+                return $this->render('recette', [
+                    'recette' => $recette,
+                    ]);
+            }
+        }
+
+        #Si on veut voir toutes les recettes (main onglet recettes [pas de $_GET])
+        $recettes = $model->getAllRecepies('title');
+
+        if($search){
+            $titreRecette = strtolower($request->get('search'));
+            foreach ($recettes as $key => $recette) {
+                if(strtolower($recette['title']) == $titreRecette){
+                    $recette = $model->getRecepie($recette['title']);
+                    return $this->render('recette', [
+                        'recette' => $recette,
+                        ]);
+                }
+            }
+        }
+
+        $recettes = $model->getAllRecepies();
+
+        
+            return $this->render('recettes', [
+                'recettes' => $recettes,
+                'search' => $search,
+                'recipe_tags' => $this->recipe_tags,
+                ]);
+
     }
 
     /**
@@ -83,11 +160,14 @@ class SiteController extends Controller
      */
     public function actionLogin()
     {
+        $this->current_page['connection'] = '#header';
+        
         if (!Yii::$app->user->isGuest) {
             return $this->goHome();
         }
 
         $model = new LoginForm();
+
         if ($model->load(Yii::$app->request->post()) && $model->login()) {
             return $this->goBack();
         } else {
@@ -104,6 +184,8 @@ class SiteController extends Controller
      */
     public function actionLogout()
     {
+        $this->current_page['connection'] = '#header';
+
         Yii::$app->user->logout();
 
         return $this->goHome();
@@ -116,6 +198,9 @@ class SiteController extends Controller
      */
     public function actionContact()
     {
+
+        $this->current_page['contacter_nous'] = '#header';
+
         $model = new ContactForm();
         if ($model->load(Yii::$app->request->post()) && $model->validate()) {
             if ($model->sendEmail(Yii::$app->params['adminEmail'])) {
@@ -139,33 +224,41 @@ class SiteController extends Controller
      */
     public function actionAbout()
     {
+        $this->current_page['a_propos'] = '#header';
         return $this->render('about');
     }
 
     /**
-     * Displays testing page.
-     *  Also defines the name in URL
+     * A sign up user can add a new recepie.
+     *
      * @return mixed
      */
-    public function actionRecepies($array)
+    public function actionAddrecipe()
     {
-        return $this->render('recepies',$array);
+        $this->current_page['add_recepie'] = '#header';
+
+        if (!Yii::$app->user->identity->super_user) { #TODO VERIFIER IDENTIER SEULEMENT CLAUDIA
+            return $this->goHome();
+        }
+
+        $model = new RecetteManager();
+
+        if ($model->load(Yii::$app->request->post())) {
+        $model->file = UploadedFile::getInstance($model, 'file');
+
+        if ($model->validate()) {
+        
+            $imageName = $model->addRecipes($model->file->extension);                
+            $model->file->saveAs('uploads/' . $imageName);
+            return $this->goHome();
+        }
     }
 
-    public function actionEntry()
-    {
-        $model = new EntryForm();
-
-        if ($model->load(Yii::$app->request->post()) && $model->validate()) {
-            // valid data received in $model
-
-            // do something meaningful here about $model ...
-            $message = 'hi dumbass';
-            return $this->render('recepies', ['message' => $message]);
-        } else {
-            // either the page is initially displayed or there is some validation error
-            return $this->render('entry', ['model' => $model]);
-        }
+    return $this->render('addRecipe', [
+        'model' => $model,
+        'recipe_tags' => $this->recipe_tags,
+        ]);
+    
     }
 
     /**
@@ -174,7 +267,10 @@ class SiteController extends Controller
      * @return mixed
      */
     public function actionSignup()
-    {
+    { 
+
+        $this->current_page['inscription'] = '#header';
+
         $model = new SignupForm();
         if ($model->load(Yii::$app->request->post())) {
             if ($user = $model->signup()) {
@@ -196,6 +292,9 @@ class SiteController extends Controller
      */
     public function actionRequestPasswordReset()
     {
+
+        $this->current_page['connection'] = '#header';
+
         $model = new PasswordResetRequestForm();
         if ($model->load(Yii::$app->request->post()) && $model->validate()) {
             if ($model->sendEmail()) {
@@ -221,6 +320,8 @@ class SiteController extends Controller
      */
     public function actionResetPassword($token)
     {
+        $this->current_page['connection'] = '#header';
+        
         try {
             $model = new ResetPasswordForm($token);
         } catch (InvalidParamException $e) {

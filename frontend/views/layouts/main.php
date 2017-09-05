@@ -8,6 +8,7 @@ use yii\bootstrap\Nav;
 use yii\bootstrap\NavBar;
 use yii\widgets\Breadcrumbs;
 use frontend\assets\AppAsset;
+use frontend\assets\canvasAsset;
 use common\widgets\Alert;
 
 AppAsset::register($this);
@@ -27,19 +28,32 @@ AppAsset::register($this);
 <?php $this->beginBody() ?>
 
 <div class="wrap">
-    <?php
-    NavBar::begin([
+    <header id="header" class="transparent-header page-section">
+    <?php #ajoute su css/js dans la page
+
+/*         NavBar::begin([]);
+
+        NavBar::end(); */
+
+#/*
+    #fun
+      NavBar::begin([
         'brandLabel' => 'My Company',
         'brandUrl' => Yii::$app->homeUrl,
         'options' => [
             'class' => 'navbar-inverse navbar-fixed-top',
         ],
     ]);
-    $menuItems = [
+    
+    #fun
+    $menuItems = [ 
+        ['label' => 'Country', 'url' => ['/country/index']],
         ['label' => 'Home', 'url' => ['/site/index']],
         ['label' => 'About', 'url' => ['/site/about']],
         ['label' => 'Contact', 'url' => ['/site/contact']],
     ];
+
+    #fun
     if (Yii::$app->user->isGuest) {
         $menuItems[] = ['label' => 'Signup', 'url' => ['/site/signup']];
         $menuItems[] = ['label' => 'Login', 'url' => ['/site/login']];
@@ -53,19 +67,23 @@ AppAsset::register($this);
             . Html::endForm()
             . '</li>';
     }
+
+    #fun
     echo Nav::widget([
         'options' => ['class' => 'navbar-nav navbar-right'],
         'items' => $menuItems,
     ]);
-    NavBar::end();
+    NavBar::end();  #*/
     ?>
-
+    </header>
     <div class="container">
         <?= Breadcrumbs::widget([
             'links' => isset($this->params['breadcrumbs']) ? $this->params['breadcrumbs'] : [],
         ]) ?>
         <?= Alert::widget() ?>
         <?= $content ?>
+
+        
     </div>
 </div>
 

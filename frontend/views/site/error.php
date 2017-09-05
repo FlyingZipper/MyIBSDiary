@@ -9,9 +9,18 @@ use yii\helpers\Html;
 
 $this->title = $name;
 ?>
-<div class="site-error">
+<section id="page-title">
+			<div class="container clearfix">
+				<h1><?= Html::encode($this->title) ?></h1>
+			</div>
+</section>
 
-    <h1><?= Html::encode($this->title) ?></h1>
+            <div class="content-wrap">
+
+                <div class="container clearfix">
+
+                    <div class="site-index">
+<div class="site-error">
 
     <div class="alert alert-danger">
         <?= nl2br(Html::encode($message)) ?>
@@ -23,5 +32,9 @@ $this->title = $name;
     <p>
         Please contact us if you think this is a server error. Thank you.
     </p>
+
+        </div>
+    </div>
+    </div>
 
 </div>

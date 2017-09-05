@@ -12,6 +12,8 @@ class SignupForm extends Model
     public $username;
     public $email;
     public $password;
+    public $firstName;
+    public $lastName;
 
 
     /**
@@ -20,6 +22,8 @@ class SignupForm extends Model
     public function rules()
     {
         return [
+            ['firstName', 'required'],
+            ['lastName', 'required'],
             ['username', 'trim'],
             ['username', 'required'],
             ['username', 'unique', 'targetClass' => '\common\models\User', 'message' => 'This username has already been taken.'],
@@ -48,6 +52,8 @@ class SignupForm extends Model
         }
         
         $user = new User();
+        $user->firstName = $this->firstName;
+        $user->lastName = $this->lastName;
         $user->username = $this->username;
         $user->email = $this->email;
         $user->setPassword($this->password);

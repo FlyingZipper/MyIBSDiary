@@ -11,7 +11,15 @@ return [
     'basePath' => dirname(__DIR__),
     'bootstrap' => ['log'],
     'controllerNamespace' => 'frontend\controllers',
+    'layout' => 'canvasLayout.php',
+
     'components' => [
+        'reCaptcha' => [
+            'name' => 'reCaptcha',
+            'class' => 'himiklab\yii2\recaptcha\ReCaptcha',
+            'siteKey' => 'your siteKey',
+            'secret' => 'your secret key',
+            ],
         'request' => [
             'csrfParam' => '_csrf-frontend',
         ],
